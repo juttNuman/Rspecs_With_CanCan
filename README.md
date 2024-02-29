@@ -23,3 +23,4 @@ Things you may want to cover:
 
 * ...
 # Rspecs_task_for_Controller
+# Rspecs_with_Devise_authentication
