@@ -1,5 +1,6 @@
 class ProductsController < ApplicationController
   before_action :set_product, only: %i[ show update destroy ]
+  before_action :authenticate_user!
 
   # GET /products
   def index

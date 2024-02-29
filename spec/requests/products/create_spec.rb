@@ -1,50 +1,56 @@
 require 'rails_helper'
 
-describe 'POST /products' do
-  # 'scenario' is similar to 'it', use which you see fit
-  
-  scenario 'valid product attributes' do
-    # send a POST request to /bookmarks, with these parameters
-    # The controller will treat them as JSON 
-    post '/products', params: {
-      product: {
-        
-        title: 'Oatmeal' ,
-        price: "20"
+  describe 'POST /products' do
+    let(:user) { User.create(email: 'numan@gmail.com', password: '123456') }
+    context 'when user is logged in' do
+      before do
+        sign_in user
+      end
+
+      it 'creates a new product with valid attributes' do
+        post '/products', params: {
+          product: {
+            title: 'Oatmeal',
+            price: '20'
+          }
+        }
+
+        expect(response).to have_http_status(:created)
+        expect(Product.count).to eq(1)
+
+        json = JSON.parse(response.body).deep_symbolize_keys
+        expect(json[:title]).to eq('Oatmeal')
+        expect(json[:price]).to eq(20)
+      end
+
+      it 'does not create a new product with invalid attributes' do
+        post '/products', params: {
+          product: {
+            title: 'Oatmeal',
+            price: ''
+          }
+        }
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(Product.count).to eq(0)
+
+        json = JSON.parse(response.body).deep_symbolize_keys
+        expect(json[:price]).to eq(["can't be blank"])
+      end
+    end
+
+    it 'returns unauthorized' do
+      post '/products', params: {
+        product: {
+          title: 'Oatmeal',
+          price: '20'
+        }
       }
-    }
-
-    # response should have HTTP Status 201 Created
-    expect(response.status).to eq(201)
-
-    json = JSON.parse(response.body).deep_symbolize_keys
     
-    # check the value of the returned response hash
-    expect(json[:title]).to eq('Oatmeal')
-    expect(json[:price]).to eq(20)
+      expect(response).to have_http_status(302)
+      expect(Product.count).to eq(0)
 
-    # 1 new bookmark record is created
-    expect(Product.count).to eq(1)
+      end
+    end
+  
 
-    # Optionally, you can check the latest record data
-    expect(Product.last.title).to eq('Oatmeal')
-  end
-
-  scenario 'invalid product attributes' do
-    post '/products', params: {
-      product: {
-        title: 'Oatmeal',
-        price: ''
-      }
-    }
-
-    # response should have HTTP Status 201 Created
-    expect(response.status).to eq(422)
-
-    json = JSON.parse(response.body).deep_symbolize_keys
-    expect(json[:price]).to eq(["can't be blank"])
-
-    # no new bookmark record is created
-    expect(Product.count).to eq(0)
-  end
-end

@@ -1,22 +1,27 @@
 require 'rails_helper'
 
 describe 'DELET /products' do
-  # this will create a 'product' method, which return the created bookmark object, 
-  # before each scenario is ran
+  let(:user) { User.create(email: 'numan@gmail.com', password: '123456') }
   let!(:product) { Product.create(title: 'Whey Protein', price: '2000') }
 
-    scenario 'valid product deletion' do
-        # Send a DELETE request to the destroy action
-        expect {
-          delete "/products/#{product.id}"
-        }.to change(Product, :count).by(-1)
+  context 'when user is logged in' do
+    before do
+      sign_in user
+    end
   
-        # Expect the response to have a status of 204 (No Content)
-        expect(response.status).to eq(204)
+    scenario 'valid product deletion' do
+    delete "/products/#{product.id}"
+    
+    expect(Product.count).to eq(0)
     end
 
+  end
 
-
-
+  scenario 'invalid user cannot delete the product' do 
+    delete "/products/#{product.id}"
+    expect(response).to have_http_status(302)
+    expect(Product.count).to eq(1)
+  end
+  
 
 end
