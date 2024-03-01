@@ -1,6 +1,8 @@
 class ProductsController < ApplicationController
+  include ActionController::MimeResponds
   before_action :set_product, only: %i[ show update destroy ]
   before_action :authenticate_user!
+  load_and_authorize_resource
 
   # GET /products
   def index
@@ -16,15 +18,20 @@ class ProductsController < ApplicationController
 
   # POST /products
   def create
-    @product = Product.new(product_params)
-
-    if @product.save
-      render json: @product, status: :created, location: @product
+   if user_signed_in?
+     @product = Product.new(product_params)
+     if @product.save
+       render json: @product, status: :created, location: @product
+     elsif can?(:create, @product)
+       render json: { error: "Unprocessable Entity", message: @product.errors.full_messages }, status: :unprocessable_entity
+     else
+       render json: { error: "Access denied" }, status: :forbidden
+     end
     else
-      render json: @product.errors, status: :unprocessable_entity
+      render json: {error: "please login first"}, status: :unauthorized
     end
   end
-
+  
   # PATCH/PUT /products/1
   def update
     if @product.update(product_params)
